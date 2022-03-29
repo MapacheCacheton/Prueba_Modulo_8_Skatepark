@@ -1,0 +1,25 @@
+<body>
+  <div class="py-5">
+    <h2>Iniciar Sesión</h2>
+    <hr class="w-50" />
+
+    <form action="http://localhost:3000/auth" method="post">
+      <div class="form-group">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" class="form-control w-50 m-auto" name="email" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password"class="form-control w-50 m-auto" name="password"/>
+        </div>
+        <div class="form-group">
+          <label class="text-danger"></label>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-success mb-3">Ingresar</button>
+      <p>¿Aún no tienes cuenta? <a href="#">Regístrate</a></p>
+    </form>
+  </div>
+  <script src="js/loginPage.js"></script>
+</body>
