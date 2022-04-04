@@ -25,6 +25,7 @@ async function insertSkater(skater, photo){
             values: data
         }
         const results = await pool.query(querySql)
+        return results.rowCount
     } catch (e) {
         console.error(e.message);
     }
@@ -34,10 +35,13 @@ async function updateSkaterInfo(skater){
     try {
         const new_skater = reorderSkaterData(skater)
         const data = Object.values(new_skater)
+        console.log(data);
         const querySql = {
             text:`UPDATE skaters SET name=$2, password=$3, experience=$4, speciality=$5 WHERE email=$1 RETURNING*;`,
             values: data
         }
+        const results = await pool.query(querySql)
+        return results.rowCount
     } catch (e) {
         console.error(e.message);
     }
@@ -49,9 +53,9 @@ async function selectSkaterForLogin(){
         const {rows} = await pool.query(query)
         return rows
     } catch (e) {
-        console.error(e.message);
+        console.error(e.message)
     }
 }
 
 
-module.exports = {getSkaters, insertSkater, selectSkaterForLogin}
+module.exports = {getSkaters, insertSkater, selectSkaterForLogin, updateSkaterInfo}

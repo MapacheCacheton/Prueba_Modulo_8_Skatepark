@@ -8,7 +8,8 @@ const path = require('path')
 const crypto = require('crypto')
 
 //Import functions
-const {getSkaters, insertSkater, selectSkaterForLogin} = require('./querys')
+const {getSkaters, insertSkater, selectSkaterForLogin, updateSkaterInfo} = require('./querys')
+const { password } = require('pg/lib/defaults')
 
 //Global variables
 const token_secret = crypto.randomBytes(64).toString('hex')
@@ -40,6 +41,14 @@ app.use(
         responseOnLimit: 'El tamaño de la imagen supera el liite permitido'
     })
 )
+
+//Functions
+function createJWT(data){
+    return jwt.sign({
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        data: data
+    }, token_secret)
+}
     
 //Server routes    
 app.listen(port, ()=>{
@@ -51,7 +60,11 @@ app.get('/css', (req, res)=>{
 })
 
 app.get('/', async (req, res)=>{
-    res.render('Lista')
+    res.render('List')
+})
+
+app.get('/list', async (req, res)=>{
+    res.render('UserList')
 })
 
 app.get('/login', (req, res)=>{
@@ -64,40 +77,30 @@ app.get('/data', (req, res)=>{
     res.render('Data')
 })
 
-
 //API ENDPOINTS
 app.get('/skaters', async (req, res)=>{
     const data = await getSkaters()
     res.send(JSON.stringify(data))
 })
 
-app.use('/skater', (req, res, next)=>{
-    const {pass1, pass2} = req.body
-    if(pass1 === pass2) next()
-    else res.redirect('/Register')
-})
-
 app.post('/skater', (req, res)=>{  
     const {files} = req.files
     const photo = `${req.body.name}.jpg`  
     files.mv(`${__dirname}/public/img/${photo}`, async (err)=>{
-        await insertSkater(req.body, photo)
         if(err) throw err
-        res.redirect('/login')
+        const registros = await insertSkater(req.body, photo)
+        if(registros>0) res.send({approved:true})
+        else res.send({approved:false})
     })
 })
 
 app.post('/auth', async (req, res)=>{
     const {email, password} = req.body
-    console.log(req.body);
     if(req.body){
         const skaters = await selectSkaterForLogin()
         const skater = skaters.find(s=>s.email==email && s.password == password)
         if(skater){
-            const token = jwt.sign({
-                exp: Math.floor(Date.now() / 1000) + 300,
-                data: req.body
-            }, token_secret)
+            const token = createJWT(req.body)
             res.send(JSON.stringify(token))
         }
         else{
@@ -105,4 +108,33 @@ app.post('/auth', async (req, res)=>{
             res.send({error:401, message:'Email o contraseña incorrectos'})
         }
     }
+})
+
+app.put('/skater', async (req, res)=>{
+    console.log(req.body);
+    const registros = await updateSkaterInfo(req.body)
+    if(registros>0) res.send({approved:true})
+    else res.send({approved:false})
+})
+
+app.post('/validate', async (req, res)=>{
+    const {token} = req.body
+    if(token){
+        jwt.verify(token, token_secret, (err, data)=>{
+            if(err) res.send({error:401, message: 'Usuario no autorizado'})
+            else{
+                const info ={
+                    email: data.data.email,
+                    password: data.data.password
+                }
+                const new_token = createJWT(info)
+                const new_info = {
+                    email: data.data.email,
+                    token: new_token
+                }
+                res.send(new_info)
+            }
+        })
+    }
+    else res.send({error:401, message: 'Usuario no autorizado'})
 })

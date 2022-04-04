@@ -2,7 +2,7 @@ function reorderSkaterData(skater, photo = false){
     const skater_info = {
         email: skater.email,
         name: skater.name,
-        password: skater.pass1,
+        password: skater.password,
         experience: skater.experience,
         speciality: skater.speciality
     }
