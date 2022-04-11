@@ -15,7 +15,7 @@ async function getSkaters(){
         console.log(e.message);
     }
 }
-
+//Implementar transacciones
 async function insertSkater(skater, photo){
     try {
         const new_skater = reorderSkaterData(skater, photo)
@@ -28,6 +28,9 @@ async function insertSkater(skater, photo){
         return results.rowCount
     } catch (e) {
         console.error(e.message);
+        if(e.code == 23505){
+            return {message:'El email ya está registrado'} 
+        }
     }
 }
 
@@ -35,7 +38,6 @@ async function updateSkaterInfo(skater){
     try {
         const new_skater = reorderSkaterData(skater)
         const data = Object.values(new_skater)
-        console.log(data);
         const querySql = {
             text:`UPDATE skaters SET name=$2, password=$3, experience=$4, speciality=$5 WHERE email=$1 RETURNING*;`,
             values: data
@@ -47,13 +49,18 @@ async function updateSkaterInfo(skater){
     }
 }
 
-async function selectSkaterForLogin(){
+async function selectSkaterForLogin(data){
     try {
-        const query =  `SELECT email, password FROM skaters;`
-        const {rows} = await pool.query(query)
-        return rows
-    } catch (e) {
-        console.error(e.message)
+        const new_data = Object.values(data)
+        const querySql = {
+            text: `SELECT * FROM skaters Where email=$1 AND password=$2;`,
+            values: new_data
+        }
+        const results = await pool.query(querySql)
+        console.log(results.rows);
+        return results.rowCount
+    } catch (error) {
+        
     }
 }
 

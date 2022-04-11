@@ -18,7 +18,6 @@ const main = (function(){
             if(res_validation.email){
                 form.email.value = res_validation.email
                 localStorage.setItem(storage_token, res_validation.token)
-                console.log(res_validation.token);
             }
             else{
                 localStorage.removeItem(storage_token)
@@ -53,8 +52,7 @@ const main = (function(){
                 method: 'POST',
                 body: JSON.stringify(token)
             })
-            const data = await res.json() 
-            return data
+            return await res.json() 
         } catch (e) {
             console.error(e.message);
         }

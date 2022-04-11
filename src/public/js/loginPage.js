@@ -27,7 +27,6 @@ const main = (function(){
     }
 
     async function loginUser(payload){
-        console.log(payload);
         try {
             const res = await fetch(url, {
                 method: 'POST',

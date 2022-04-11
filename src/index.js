@@ -9,7 +9,6 @@ const crypto = require('crypto')
 
 //Import functions
 const {getSkaters, insertSkater, selectSkaterForLogin, updateSkaterInfo} = require('./querys')
-const { password } = require('pg/lib/defaults')
 
 //Global variables
 const token_secret = crypto.randomBytes(64).toString('hex')
@@ -54,19 +53,15 @@ function createJWT(data){
 app.listen(port, ()=>{
     console.log(`Server running on port ${port}`)
 })
-
 app.get('/css', (req, res)=>{
     res.sendFile(`estilos.css`)
 })
-
 app.get('/', async (req, res)=>{
     res.render('List')
 })
-
 app.get('/list', async (req, res)=>{
     res.render('UserList')
 })
-
 app.get('/login', (req, res)=>{
     res.render('Login')
 })
@@ -94,29 +89,26 @@ app.post('/skater', (req, res)=>{
     })
 })
 
-app.post('/auth', async (req, res)=>{
-    const {email, password} = req.body
-    if(req.body){
-        const skaters = await selectSkaterForLogin()
-        const skater = skaters.find(s=>s.email==email && s.password == password)
-        if(skater){
-            const token = createJWT(req.body)
-            res.send(JSON.stringify(token))
-        }
-        else{
-            res.statusCode = 401
-            res.send({error:401, message:'Email o contraseña incorrectos'})
-        }
-    }
-})
 
 app.put('/skater', async (req, res)=>{
-    console.log(req.body);
     const registros = await updateSkaterInfo(req.body)
     if(registros>0) res.send({approved:true})
     else res.send({approved:false})
 })
 
+app.post('/auth', async (req, res)=>{
+    console.log(req.body);
+    if(req.body.email && req.body.password){
+        const skater = await selectSkaterForLogin(req.body)
+        console.log(skater);
+        if(skater==1){
+            const token = createJWT(req.body)
+            res.send(JSON.stringify(token))
+        }
+        else res.send({error:401, message:'Email o contraseña incorrectos'})
+    }
+    else res.send({error:401, message:'Email o contraseña incorrectos'})
+})
 app.post('/validate', async (req, res)=>{
     const {token} = req.body
     if(token){
