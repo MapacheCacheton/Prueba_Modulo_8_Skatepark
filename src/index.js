@@ -8,7 +8,7 @@ const path = require('path')
 const crypto = require('crypto')
 
 //Import functions
-const {getSkaters, insertSkater, selectSkaterForLogin, updateSkaterInfo} = require('./querys')
+const {getUser, insertUser, selectUserForLogin, updateUser, deleteUser, reactivateUser} = require('./querys')
 
 //Global variables
 const token_secret = crypto.randomBytes(64).toString('hex')
@@ -74,34 +74,45 @@ app.get('/data', (req, res)=>{
 
 //API ENDPOINTS
 app.get('/skaters', async (req, res)=>{
-    const data = await getSkaters()
+    const data = await getUser()
     res.send(JSON.stringify(data))
 })
 
-app.post('/skater', (req, res)=>{  
+app.post('/skater', async (req, res)=>{  
     const {files} = req.files
     const photo = `${req.body.name}.jpg`  
-    files.mv(`${__dirname}/public/img/${photo}`, async (err)=>{
-        if(err) throw err
-        const registros = await insertSkater(req.body, photo)
-        if(registros>0) res.send({approved:true})
+    const records = await insertUser(req.body, photo)
+        if(records == 'disabled') {
+            const reactived = await reactivateUser(req.body.email)
+            if(reactived) res.send({approved:true})
+            else res.send({approved:false})
+        }
+        else if(records>0){
+            files.mv(`${__dirname}/public/img/${photo}`, (err)=>{
+                if(err) throw err
+            })
+            res.send({approved:true})
+        } 
         else res.send({approved:false})
-    })
 })
 
-
 app.put('/skater', async (req, res)=>{
-    const registros = await updateSkaterInfo(req.body)
-    if(registros>0) res.send({approved:true})
+    const records = await updateUser(req.body)
+    if(records>0) res.send({approved:true})
+    else res.send({approved:false})
+})
+
+app.delete('/skater', async (req, res)=>{
+    const records = await deleteUser(req.body)
+    if(records == 1) res.send({approved:true})
     else res.send({approved:false})
 })
 
 app.post('/auth', async (req, res)=>{
     console.log(req.body);
     if(req.body.email && req.body.password){
-        const skater = await selectSkaterForLogin(req.body)
-        console.log(skater);
-        if(skater==1){
+        const records = await selectUserForLogin(req.body)
+        if(records==1){
             const token = createJWT(req.body)
             res.send(JSON.stringify(token))
         }

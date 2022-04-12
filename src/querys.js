@@ -1,8 +1,8 @@
 const pool = require('./connection')
 const {validateApprovedSkater} = require('./validations')
-const {reorderSkaterData} = require('./functions')
+const {reorderUserData} = require('./functions')
 
-async function getSkaters(){
+async function getUser(){
     try {
         const query = {
             rowMode: 'Array',
@@ -16,27 +16,42 @@ async function getSkaters(){
     }
 }
 //Implementar transacciones
-async function insertSkater(skater, photo){
+async function insertUser(user, photo){
     try {
-        const new_skater = reorderSkaterData(skater, photo)
+        const new_skater = reorderUserData(user, photo)
         const data = Object.values(new_skater)
         const querySql = {
             text: `INSERT INTO skaters (email, name, password, experience, speciality, photo) VALUES ($1, $2, $3, $4, $5, $6) RETURNING*;`,
             values: data
         }
+        await pool.query('BEGIN')
         const results = await pool.query(querySql)
+        await pool.query('COMMIT')
         return results.rowCount
     } catch (e) {
-        console.error(e.message);
+        await pool.query('ROLLBACK')
         if(e.code == 23505){
-            return {message:'El email ya está registrado'} 
+            return 'disabled'
         }
+        return 0
     }
 }
 
-async function updateSkaterInfo(skater){
+async function reactivateUser(email){
     try {
-        const new_skater = reorderSkaterData(skater)
+        await pool.query('BEGIN')
+        const results = await pool.query(`UPDATE skaters SET deleted=false WHERE email='${email}' RETURNING*;`)
+        await pool.query('COMMIT')
+        return results.rowCount
+    } catch (error) {
+        await pool.query('ROLLBACK')
+        return 0
+    }
+}
+
+async function updateUser(skater){
+    try {
+        const new_skater = reorderUserData(skater)
         const data = Object.values(new_skater)
         const querySql = {
             text:`UPDATE skaters SET name=$2, password=$3, experience=$4, speciality=$5 WHERE email=$1 RETURNING*;`,
@@ -49,7 +64,7 @@ async function updateSkaterInfo(skater){
     }
 }
 
-async function selectSkaterForLogin(data){
+async function selectUserForLogin(data){
     try {
         const new_data = Object.values(data)
         const querySql = {
@@ -64,5 +79,20 @@ async function selectSkaterForLogin(data){
     }
 }
 
+async function deleteUser(user){
+    const data = [user.email]
+    const querySql = {
+        text: `UPDATE skaters SET deleted=true WHERE email=$1 RETURNING*;`,
+        values: data
+    }
+    try {
+        await pool.query('BEGIN')
+        const results = await pool.query(querySql)
+        await pool.query('COMMIT')
+        return results.rowCount
+    } catch (error) {
+        await pool.query('ROLLBACK')
+    }
+}
 
-module.exports = {getSkaters, insertSkater, selectSkaterForLogin, updateSkaterInfo}
+module.exports = {getUser, insertUser, selectUserForLogin, updateUser, deleteUser, reactivateUser}

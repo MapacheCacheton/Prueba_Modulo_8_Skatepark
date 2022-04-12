@@ -1,4 +1,4 @@
-function reorderSkaterData(skater, photo = false){
+function reorderUserData(skater, photo = false){
     const skater_info = {
         email: skater.email,
         name: skater.name,
@@ -10,4 +10,4 @@ function reorderSkaterData(skater, photo = false){
     return skater_info
 }
 
-module.exports = {reorderSkaterData}
+module.exports = {reorderUserData}
