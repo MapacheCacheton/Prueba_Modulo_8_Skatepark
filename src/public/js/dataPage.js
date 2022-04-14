@@ -7,21 +7,20 @@ const main = (function(){
     //DomCache
     const form = document.querySelector('form')
     const button = document.querySelector('#button')
+    const admin_button = document.querySelector('#admin_button')
     const message_label = document.querySelector('#message')
 
     //Event Handler
     form.addEventListener('submit', submitHandler)
     button.addEventListener('click', clickHandler)
+    admin_button.addEventListener('click', redirectToAdminPage)
     
     //Functions
     async function init(){
         const data = {token:localStorage.getItem(storage_token)}
         if(data.token){
             const res_validation = await validateToken(data)
-            if(res_validation.admin) {
-                localStorage.setItem(storage_token, res_validation.token)
-                location.href = 'http://localhost:3000/admin'
-            }
+            if(res_validation.admin) admin_button.classList.toggle('d-block')
             if(res_validation.email){
                 form.email.value = res_validation.email
                 localStorage.setItem(storage_token, res_validation.token)
@@ -63,6 +62,11 @@ const main = (function(){
             }, 5000)
         }
         else alert('Ha ocurrido un error, intente de nuevo mas tarde')
+    }
+
+    function redirectToAdminPage(e){
+        e.preventDefault()
+        location.href = 'http://localhost:3000/admin'
     }
 
     async function validateToken(token){

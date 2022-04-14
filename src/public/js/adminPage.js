@@ -6,11 +6,13 @@ const main = (function(){
     //DomCache
     const t_body = document.querySelector('tbody')
     const label = document.querySelector('label')
-    const log_out = document.querySelector('a')
+    const btn_log_out = document.querySelector('.btn-danger')
+    const btn_datos = document.querySelector('.btn-success')
 
     //Events
-    t_body.addEventListener('change', changeHandler)
-    log_out.addEventListener('click', clickHandler)
+    t_body.addEventListener('change', changeUserState)
+    btn_log_out.addEventListener('click', logOut)
+    btn_datos.addEventListener('click', redirectToDataPage)
 
     //Functions
     async function init(){
@@ -18,7 +20,7 @@ const main = (function(){
         await renderUsers()
     }
 
-    async function changeHandler(e){
+    async function changeUserState(e){
         if(e.target.classList.contains('check')){
             e.preventDefault()
             const checkbox = document.querySelector('input')
@@ -28,7 +30,8 @@ const main = (function(){
             }
             const {approved} = await apiChangeState(payload)
             if(approved) {
-                label.innerHTML = 'El estado fue cambiado a "Aprobado"'
+                if(checkbox.checked) label.innerHTML = 'El estado fue cambiado a "Aprobado"'
+                else label.innerHTML = 'El estado fue cambiado a "En revisión"'
             } 
             else{
                 checkbox.checked = (checkbox.checked)? false: true
@@ -40,10 +43,15 @@ const main = (function(){
         }
     }
 
-    async function clickHandler(e){
+    function logOut(e){
         e.preventDefault()
         localStorage.removeItem(storage_token)
         location.href = 'http://localhost:3000/login'
+    }
+
+    function redirectToDataPage(e){
+        e.preventDefault()
+        location.href = 'http://localhost:3000/data'
     }
 
     async function apiChangeState(payload){

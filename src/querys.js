@@ -92,4 +92,18 @@ async function deleteUser(user){
     }
 }
 
-module.exports = {getUser, insertUser, selectUserForLogin, updateUser, deleteUser, reactivateUser}
+async function updateState(user){
+    const data = Object.values(user)
+    const queryObj = {
+        text: `UPDATE skaters SET state=$2 WHERE id=$1 RETURNING*;`,
+        values: data
+    }
+    try {
+        const results = await pool.query(queryObj)
+        return results.rowCount
+    } catch (e) {
+        console.log(e.message);
+    }
+}
+
+module.exports = {getUser, insertUser, selectUserForLogin, updateUser, deleteUser, reactivateUser, updateState}

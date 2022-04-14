@@ -1,6 +1,6 @@
 const main = (function(){
     //Variables
-    const url = 'http://localhost:3000/auth'
+    const url_ = 'http://localhost:3000/'
     const storage_token = 'jwt_token'
 
     //Dom cache
@@ -13,8 +13,20 @@ const main = (function(){
     form.addEventListener('submit', submitHandler)
     form.email.addEventListener('click', clickHandler)
     form.password.addEventListener('click', clickHandler)
-
+    
     //functions
+    async function init(){
+    const token = localStorage.getItem(storage_token)
+        if(token){
+            const response = await apiValidateToken(token)
+            if(response.token) {
+                localStorage.setItem(storage_token, response.token)
+                if(response.admin) location.href = 'http://localhost:3000/admin'
+                else location.href = 'http://localhost:3000/data'
+            }
+        }
+    }
+
     async function submitHandler(e){
         e.preventDefault()
         const payload = new FormData(this)
@@ -26,9 +38,24 @@ const main = (function(){
         error_label.innerHTML = ''
     }
 
+    async function apiValidateToken(token){
+        try {
+            const res = await fetch(`${url_}validate`, {
+                headers:{
+                    'Content-Type': 'application/json'
+                },
+                method: 'POST',
+                body: JSON.stringify({token:token})
+            })
+            return await res.json() 
+        } catch (e) {
+            console.error(e.message);
+        }
+    }
+
     async function loginUser(payload){
         try {
-            const res = await fetch(url, {
+            const res = await fetch(`${url_}auth`, {
                 method: 'POST',
                 body: payload
             })
@@ -41,23 +68,16 @@ const main = (function(){
     function validateToken(token){
         if(token.error) error_label.innerHTML = token.message
         else {
-            localStorage.setItem(storage_token, token)
+            localStorage.setItem(storage_token, token.token)
             redirect(token)
         }
     }
 
     function redirect(token = false){
-        console.log(token);
-        if(token.admin)location.href = 'http://localhost:3000/admin'
+        if(token.user.admin) location.href = 'http://localhost:3000/admin'
         else location.href = 'http://localhost:3000/data'
     }
-
-    function init(){
-        const token = localStorage.getItem(storage_token)
-        if(token){
-            redirect()
-        }
-    }
+    
 
     return {init}
 })()
