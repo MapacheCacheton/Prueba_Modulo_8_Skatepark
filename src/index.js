@@ -1,17 +1,17 @@
 //Import dependencies
 const express = require('express')
 const exphbs = require('express-handlebars')
-const jwt = require('jsonwebtoken')
 const bodyParser = require('body-parser')
 const expressFileUpload = require('express-fileupload')
 const path = require('path')
-const crypto = require('crypto')
+
 
 //Import functions
 const {getUser, insertUser, selectUserForLogin, updateUser, deleteUser, reactivateUser} = require('./querys')
+const {createTokenBody} = require('./functions')
+const {createJWT, validateJwt} = require('./jwt_functions')
 
 //Global variables
-const token_secret = crypto.randomBytes(64).toString('hex')
 const app = express()
 const port = 3000
 
@@ -42,12 +42,7 @@ app.use(
 )
 
 //Functions
-function createJWT(data){
-    return jwt.sign({
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        data: data
-    }, token_secret)
-}
+
     
 //Server routes    
 app.listen(port, ()=>{
@@ -59,8 +54,8 @@ app.get('/css', (req, res)=>{
 app.get('/', async (req, res)=>{
     res.render('List')
 })
-app.get('/list', async (req, res)=>{
-    res.render('UserList')
+app.get('/admin', async (req, res)=>{
+    res.render('AdminList')
 })
 app.get('/login', (req, res)=>{
     res.render('Login')
@@ -108,36 +103,29 @@ app.delete('/skater', async (req, res)=>{
     else res.send({approved:false})
 })
 
-app.post('/auth', async (req, res)=>{
+app.post('/state', async (req, res)=>{
     console.log(req.body);
+})
+
+app.post('/auth', async (req, res)=>{
+    const error_default = {error:401, message:'Email o contraseña incorrectos'}
     if(req.body.email && req.body.password){
         const records = await selectUserForLogin(req.body)
-        if(records==1){
-            const token = createJWT(req.body)
+        if(records.selected==1){
+            const obj_user = createTokenBody(records)
+            const token = createJWT(obj_user)
             res.send(JSON.stringify(token))
         }
-        else res.send({error:401, message:'Email o contraseña incorrectos'})
+        else res.send(error_default)
     }
-    else res.send({error:401, message:'Email o contraseña incorrectos'})
+    else res.send(error_default)
 })
 app.post('/validate', async (req, res)=>{
     const {token} = req.body
+    const error_default = {error:401, message: 'Usuario no autorizado'}
     if(token){
-        jwt.verify(token, token_secret, (err, data)=>{
-            if(err) res.send({error:401, message: 'Usuario no autorizado'})
-            else{
-                const info ={
-                    email: data.data.email,
-                    password: data.data.password
-                }
-                const new_token = createJWT(info)
-                const new_info = {
-                    email: data.data.email,
-                    token: new_token
-                }
-                res.send(new_info)
-            }
-        })
+        const result = validateJwt(error_default, token)
+        res.send(JSON.stringify(result))
     }
-    else res.send({error:401, message: 'Usuario no autorizado'})
+    else res.send(error_default)
 })

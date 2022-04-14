@@ -10,4 +10,12 @@ function reorderUserData(skater, photo = false){
     return skater_info
 }
 
-module.exports = {reorderUserData}
+function createTokenBody(records){
+    return obj_user = {
+        email: records.user[0].email,
+        password: records.user[0].password,
+        admin: records.user[0].admin
+    }
+}
+
+module.exports = {reorderUserData, createTokenBody}

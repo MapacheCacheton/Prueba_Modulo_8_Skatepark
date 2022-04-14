@@ -42,12 +42,14 @@ const main = (function(){
         if(token.error) error_label.innerHTML = token.message
         else {
             localStorage.setItem(storage_token, token)
-            redirect()
+            redirect(token)
         }
     }
 
-    function redirect(){
-        location.href = 'http://localhost:3000/data'
+    function redirect(token = false){
+        console.log(token);
+        if(token.admin)location.href = 'http://localhost:3000/admin'
+        else location.href = 'http://localhost:3000/data'
     }
 
     function init(){

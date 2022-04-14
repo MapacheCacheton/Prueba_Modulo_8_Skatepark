@@ -1,16 +1,14 @@
 const pool = require('./connection')
-const {validateApprovedSkater} = require('./validations')
 const {reorderUserData} = require('./functions')
 
 async function getUser(){
     try {
         const query = {
             rowMode: 'Array',
-            text: `SELECT id, photo, name, experience, speciality, state FROM skaters WHERE deleted = false ORDER BY id;`,
+            text: `SELECT id, photo, name, experience, speciality, state, admin FROM skaters WHERE deleted = false ORDER BY id;`,
         }
         const results = await pool.query(query)
-        const skaters = validateApprovedSkater(results.rows)
-        return skaters
+        return results.rows
     } catch (e) {
         console.log(e.message);
     }
@@ -72,8 +70,7 @@ async function selectUserForLogin(data){
             values: new_data
         }
         const results = await pool.query(querySql)
-        console.log(results.rows);
-        return results.rowCount
+        return {selected: results.rowCount, user: results.rows}
     } catch (error) {
         
     }

@@ -18,6 +18,10 @@ const main = (function(){
         const data = {token:localStorage.getItem(storage_token)}
         if(data.token){
             const res_validation = await validateToken(data)
+            if(res_validation.admin) {
+                localStorage.setItem(storage_token, res_validation.token)
+                location.href = 'http://localhost:3000/admin'
+            }
             if(res_validation.email){
                 form.email.value = res_validation.email
                 localStorage.setItem(storage_token, res_validation.token)
